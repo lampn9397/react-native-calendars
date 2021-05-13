@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import XDate from 'xdate';
-import React, {Component} from 'react';
-import {FlatList, ActivityIndicator, View} from 'react-native';
-import {extractComponentProps} from '../../component-updater';
+import React, { Component } from 'react';
+import { FlatList, ActivityIndicator, View } from 'react-native';
+import { extractComponentProps } from '../../component-updater';
 import dateutils from '../../dateutils';
 import styleConstructor from './style';
 import Reservation from './reservation';
@@ -15,13 +15,13 @@ class ReservationList extends Component {
     ...Reservation.propTypes,
     /** the list of items that have to be displayed in agenda. If you want to render item as empty date
     the value of date key kas to be an empty array []. If there exists no value for date key it is
-    considered that the date in question is not yet loaded */ 
+    considered that the date in question is not yet loaded */
     reservations: PropTypes.object,
     selectedDay: PropTypes.instanceOf(XDate),
     topDay: PropTypes.instanceOf(XDate),
     /** Show items only for the selected day. Default = false */
     showOnlySelectedDayItems: PropTypes.bool,
-    /** callback that gets called when day changes while scrolling agenda list */ 
+    /** callback that gets called when day changes while scrolling agenda list */
     onDayChange: PropTypes.func,
     /** specify what should be rendered instead of ActivityIndicator */
     renderEmptyData: PropTypes.func,
@@ -38,6 +38,8 @@ class ReservationList extends Component {
     onMomentumScrollEnd: PropTypes.func,
     /** A RefreshControl component, used to provide pull-to-refresh functionality for the ScrollView */
     refreshControl: PropTypes.element,
+    /** Set this true to disable onScroll event */
+    disableOnScroll: PropTypes.bool,
     /** Set this true while waiting for new data from a refresh */
     refreshing: PropTypes.bool,
     /** If provided, a standard RefreshControl will be added for "Pull to Refresh" functionality. Make sure to also set the refreshing prop correctly */
@@ -46,6 +48,7 @@ class ReservationList extends Component {
 
   static defaultProps = {
     refreshing: false,
+    disableOnScroll: false,
     selectedDay: XDate(true)
   };
 
@@ -89,7 +92,7 @@ class ReservationList extends Component {
   }
 
   updateReservations(props) {
-    const {selectedDay} = props;
+    const { selectedDay } = props;
     const reservations = this.getReservations(props);
     if (this.list && !dateutils.sameDate(selectedDay, this.selectedDay)) {
       let scrollPosition = 0;
@@ -97,7 +100,7 @@ class ReservationList extends Component {
         scrollPosition += this.heights[i] || 0;
       }
       this.scrollOver = false;
-      this.list.scrollToOffset({offset: scrollPosition, animated: true});
+      this.list.scrollToOffset({ offset: scrollPosition, animated: true });
     }
     this.selectedDay = selectedDay;
     this.updateDataSource(reservations.reservations);
@@ -127,9 +130,9 @@ class ReservationList extends Component {
   }
 
   getReservations(props) {
-    const {selectedDay, showOnlySelectedDayItems} = props;
+    const { selectedDay, showOnlySelectedDayItems } = props;
     if (!props.reservations || !selectedDay) {
-      return {reservations: [], scrollPosition: 0};
+      return { reservations: [], scrollPosition: 0 };
     }
 
     let reservations = [];
@@ -168,7 +171,7 @@ class ReservationList extends Component {
       }
     }
 
-    return {reservations, scrollPosition};
+    return { reservations, scrollPosition };
   }
 
   onScroll = event => {
@@ -208,7 +211,7 @@ class ReservationList extends Component {
     return false;
   };
 
-  renderRow = ({item, index}) => {
+  renderRow = ({ item, index }) => {
     const reservationProps = extractComponentProps(Reservation, this.props);
 
     return (
@@ -219,7 +222,7 @@ class ReservationList extends Component {
   };
 
   render() {
-    const {reservations, selectedDay, theme, style} = this.props;
+    const { reservations, selectedDay, theme, style, disableOnScroll } = this.props;
     if (!reservations || !reservations[selectedDay.toString('yyyy-MM-dd')]) {
       if (_.isFunction(this.props.renderEmptyData)) {
         return _.invoke(this.props, 'renderEmptyData');
@@ -239,7 +242,7 @@ class ReservationList extends Component {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={200}
         onMoveShouldSetResponderCapture={this.onMoveShouldSetResponderCapture}
-        onScroll={this.onScroll}
+        onScroll={disableOnScroll ? undefined : this.onScroll}
         refreshControl={this.props.refreshControl}
         refreshing={this.props.refreshing}
         onRefresh={this.props.onRefresh}
